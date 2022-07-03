@@ -2,6 +2,7 @@ import 'package:date_time_picker/date_time_picker.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:group_radio_button/group_radio_button.dart';
+import 'package:intl/intl.dart';
 
 import '../model/todo.dart';
 
@@ -15,6 +16,23 @@ class CreateEditTodoScreen extends StatefulWidget {
 }
 
 class _CreateEditTodoScreenState extends State<CreateEditTodoScreen> {
+  @override
+  void initState() {
+    super.initState();
+
+    if (widget.screenData.todoToEdit != null) {
+      widget.screenData.nameController.text =
+          widget.screenData.todoToEdit?.name ?? '';
+      widget.screenData.descriptionController.text =
+          widget.screenData.todoToEdit?.description ?? '';
+      widget.screenData.tagController.text =
+          widget.screenData.todoToEdit?.tag ?? '';
+      widget.screenData.selectedDate = widget.screenData.todoToEdit?.date;
+      widget.screenData.selectedPriority =
+          widget.screenData.todoToEdit?.priority ?? Priority.normal;
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Container(
@@ -47,16 +65,13 @@ class _CreateEditTodoScreenState extends State<CreateEditTodoScreen> {
             ),
           ),
           DateTimePicker(
-            initialValue: '',
+            initialValue: widget.screenData.dateFormat
+                .format(widget.screenData.selectedDate ?? DateTime.now()),
             firstDate: DateTime(2022),
             lastDate: DateTime(2100),
             dateLabelText: 'Date',
             onChanged: (date) =>
                 widget.screenData.selectedDate = DateTime.tryParse(date),
-            validator: (date) {
-              return null;
-            },
-            onSaved: (val) => print(val),
           ),
           RadioGroup<Priority>.builder(
             groupValue: widget.screenData.selectedPriority,
@@ -71,14 +86,14 @@ class _CreateEditTodoScreenState extends State<CreateEditTodoScreen> {
           TextButton(
             onPressed: () {
               final Todo newTodo = Todo(
+                id: widget.screenData.todoToEdit?.id ??
+                    DateTime.now().millisecondsSinceEpoch,
                 name: widget.screenData.nameController.text,
                 priority: widget.screenData.selectedPriority,
                 date: widget.screenData.selectedDate ?? DateTime.now(),
                 tag: widget.screenData.tagController.text,
                 description: widget.screenData.descriptionController.text,
               );
-
-              print('NEW TODO IS: $newTodo');
 
               Navigator.pop(context, newTodo);
             },
@@ -97,6 +112,8 @@ class _CreateEditTodoScreenState extends State<CreateEditTodoScreen> {
 }
 
 class CreateEditTodoScreenData {
+  Todo? todoToEdit;
+
   List<Priority> priority = Priority.values;
   Priority selectedPriority = Priority.normal;
   DateTime? selectedDate;
@@ -104,4 +121,8 @@ class CreateEditTodoScreenData {
   final TextEditingController nameController = TextEditingController();
   final TextEditingController descriptionController = TextEditingController();
   final TextEditingController tagController = TextEditingController();
+
+  DateFormat dateFormat = DateFormat("MMM d, yyyy");
+
+  CreateEditTodoScreenData({this.todoToEdit});
 }

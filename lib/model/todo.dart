@@ -1,4 +1,5 @@
 class Todo {
+  final int id;
   final String name;
   final Priority priority;
   final DateTime date;
@@ -6,6 +7,7 @@ class Todo {
   final String description;
 
   Todo({
+    required this.id,
     required this.name,
     required this.priority,
     required this.date,
@@ -14,8 +16,29 @@ class Todo {
   });
 
   @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      other is Todo &&
+          runtimeType == other.runtimeType &&
+          id == other.id &&
+          name == other.name &&
+          priority == other.priority &&
+          date == other.date &&
+          tag == other.tag &&
+          description == other.description;
+
+  @override
+  int get hashCode =>
+      id.hashCode ^
+      name.hashCode ^
+      priority.hashCode ^
+      date.hashCode ^
+      tag.hashCode ^
+      description.hashCode;
+
+  @override
   String toString() {
-    return 'Todo{name: $name, priority: $priority, date: $date, tag: $tag, description: $description}';
+    return 'Todo{id: $id, name: $name, priority: $priority, date: $date, tag: $tag, description: $description}';
   }
 }
 

@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_swipe_action_cell/flutter_swipe_action_cell.dart';
 import 'package:todoist_test/model/todo.dart';
 import 'package:todoist_test/ui/create_edit_todo_screen.dart';
 import 'package:todoist_test/ui/widgets.dart';
+import 'package:collection/collection.dart';
 
 class HomeScreen extends StatefulWidget {
   final ScreenData screenData;
@@ -36,9 +38,47 @@ class _HomeScreenState extends State<HomeScreen> {
           ],
           ListView.builder(
             shrinkWrap: true,
-            itemBuilder: (context, index) => TodoItem(
-              todo: widget.screenData.todosList[index],
-            ),
+            itemBuilder: (context, index) {
+              final item = widget.screenData.todosList[index];
+
+              return SwipeActionCell(
+                key: ObjectKey(item),
+                fullSwipeFactor: 0.6,
+                trailingActions: <SwipeAction>[
+                  SwipeAction(
+                    performsFirstActionWithFullSwipe: true,
+                    onTap: (CompletionHandler handler) async {
+                      await handler(true);
+                      setState(() {
+                        widget.screenData.todosList.remove(item);
+                      });
+                    },
+                    color: Colors.transparent,
+                    icon: const Icon(
+                      Icons.delete,
+                      color: Colors.red,
+                    ),
+                    widthSpace: 60,
+                  ),
+                  SwipeAction(
+                    performsFirstActionWithFullSwipe: true,
+                    onTap: (CompletionHandler handler) async {
+                      handler(false);
+                      openCreateEditTodoScreen(todoToEdit: item);
+                    },
+                    color: Colors.transparent,
+                    icon: const Icon(
+                      Icons.edit,
+                      color: Colors.blue,
+                    ),
+                    widthSpace: 60,
+                  ),
+                ],
+                child: TodoItem(
+                  todo: item,
+                ),
+              );
+            },
             itemCount: widget.screenData.todosList.length,
           ),
         ],
@@ -53,8 +93,9 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  Future<void> openCreateEditTodoScreen() async {
-    final createEditTodoScreenData = CreateEditTodoScreenData();
+  Future<void> openCreateEditTodoScreen({Todo? todoToEdit}) async {
+    final createEditTodoScreenData =
+        CreateEditTodoScreenData(todoToEdit: todoToEdit);
 
     final result = await showModalBottomSheet(
       context: context,
@@ -75,13 +116,24 @@ class _HomeScreenState extends State<HomeScreen> {
       ),
     );
 
-    print('RESULT IS: $result');
-
     if (result != null) {
       setState(() {
-        widget.screenData.todosList.add(result);
+        if (_isNewTodo(result.id, widget.screenData.todosList)) {
+          widget.screenData.todosList.add(result);
+        } else {
+          widget.screenData.todosList[widget.screenData.todosList
+              .indexWhere((element) => element.id == result.id)] = result;
+        }
       });
     }
+  }
+
+  bool _isNewTodo(int todoId, List<Todo> todosList) {
+    Todo? oldTodo;
+
+    oldTodo = todosList.firstWhereOrNull((element) => element.id == todoId);
+
+    return oldTodo == null;
   }
 }
 
